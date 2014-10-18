@@ -1,78 +1,45 @@
 /*
-
- * File: main.c
-
- * Author: Johnson Khath, Chaihath Wiyarand, Nampop Singsumpan
-
- *
-
- * Created on September 19, 2014, 1:16 AM
-
- */
-
+* File: main.c
+* Author: Johnson Khath, Chaihath Wiyarand, Nampop Singsumpan
+*
+* Created on September 19, 2014, 1:16 AM
+*/
 #include <stdio.h>
-
 #include <stdlib.h>
-
 #include <pic16f688.h>
-
 #include <stdbool.h>
-
 //initialize ADC
-
 /*
- * 
+*
 *
 CHS<2:0>: Analog Channel Select bits
-
 000 = AN0
-
 001 = AN1
-
 010 = AN2
-
 011 = AN3
-
 100 = AN4
-
 101 = AN5
-
 110 = AN6
-
 111 = AN7
-
- *
-
- *
-
+*
+*
 ADCS<2:0>: A/D Conversion Clock Select bits
-
 000 = FOSC/2
-
 001 = FOSC/8
-
 010 = FOSC/32
-
 x11 = FRC (clock derived from a dedicated internal oscillator = 500 kHz max)
-
 100 = FOSC/4
-
 101 = FOSC/16
-
 110 = FOSC/64
-
- */
-
+*/
 //Initialize ADC
-
 /*
-   STROBE   RA2// FOR US IS RA4
-   D0       RC2
-   D1       RC3
-   D2       RC4
-   D3       RC5
- */
-
+STROBE RA2// FOR US IS RA4
+D0 RC2
+D1 RC3
+D2 RC4
+D3 RC5
+*/
 /* Sensor Device Responses */
 #define MSG_ACK 0xE /* acknowledgement to the commands */
 #define MSG_NOTHING 0xF /* reserved */
@@ -81,65 +48,52 @@ x11 = FRC (clock derived from a dedicated internal oscillator = 500 kHz max)
 
 
 void adc_init() {
-
     //1.turn off comparators
-
     //2.select pin as analog input
-
     //3.set A/D control registers
-
     CMCON0 = 0x07; //CMCON Turn OFF comparators
     ANSEL = 0b00000100; // ANSEL Analog Select RA2/AN2 as analog input 0=digital and 1 = analog
     ADCON0 = 0b00001000; // Analog channel select 010=AN2 read analog signal from here
     TRISA = 0b00010100; // SET RA4 and RA2 as digital input adn the rest is output
-    TRISC = 0b00111100; // Set RC2-5 as digital input and the rest is output
+    TRISC = 0b00111101; // Set RC2-5 as digital input and the rest is output
     ADCON1 = 0b10000001; // Implement A/D, 000 = FOSC/2
     ADON = 1; //ADC bit enabled
-
-
-
-
-
+    PORTA = 0b00000000;
+   // PORTC = 0b00000000;
 }
-
 //read ADC value
-
 unsigned int receive_msg() {
-   unsigned int msg = '';// prototype for message
-    unsigned int i = 0;
     // set_receive();// already been done
-  // unsigned first=0;//LED on 0 means off 1 means on
-  //  unsigned second=0;//LED off 0 means on 1 means off
-    unsigned int STROBE;
-    STROBE = PORTAbits.RA4;
-    msg = STROBE;
-//    while(STROBE == hi);
-//    while(STROBE == lo);
-//    while(STROBE == hi){
-//        //read the data  
+    // unsigned first=0;//LED on 0 means off 1 means on
+    // unsigned second=0;//LED off 0 means on 1 means off
+    unsigned int STROBE = 0;
+   
+//    if(PORTCbits.RC0 == 1);
+//    {
+//        S = 1;
 //    }
-//    for(i= 0; i<4;i++){
-//    while(STROBE == lo);
-//    while(STROBE == hi){
-//        //read
-//    }
-//    }
-        //  3.read the data
-        //  4.wait strobe high
-        //  5.return the data
-
-        return msg;
+    STROBE = PORTCbits.RC0;
+    // while(STROBE == hi);
+    // while(STROBE == lo);
+    // while(STROBE == hi){
+    // //read the data
+    // }
+    // for(i= 0; i<4;i++){
+    // while(STROBE == lo);
+    // while(STROBE == hi){
+    // //read
+    // }
+    // }
+    // 3.read the data
+    // 4.wait strobe high
+    // 5.return the data
+    return STROBE;
 }
-
 unsigned int adc_read(void) {
     /*
-
     1.set ADC status bit to start a cycle and wait until the process is completed
-
     2.clear ADC interrupt flag bit
-
-     */
-
+    */
     unsigned int adcValue; //used to store ADC value as integer
     unsigned int temp; //temporary
     temp = 0; //initialize
@@ -148,43 +102,43 @@ unsigned int adc_read(void) {
     temp = (unsigned int) ADRESH; //Grab bits from Results Register High
     adcValue = temp << 8; //Shift it up by 8 Bits
     adcValue += (unsigned int) ADRESL; //add bits from Lower Results Register
-
     return adcValue;
-
 }
-
 //Convert the bits into a voltage value for easier LED ON OFF determination
-
 unsigned int conv_adc2volt(void) {
     //5V reference 10 bits = 1024 steps
     unsigned int voltage;
     voltage = adc_read() / 1023;
     return voltage;
-
 }
 
 int main(int argc, char** argv) {
-
     adc_init(); //Initial The adc function
-    unsigned int message;
+    unsigned int message = 0;
+
     while (1) {
-        message = receive_msg();
-        //Read the value and do the compare
-        if (message == hi) { //Voltage value ex 42 = 4.2 volts
-            PORTCbits.RC1 = 1; //LED ON @ RC1
-        } else {
-            PORTCbits.RC1 = 0; //LED OFF @ RC1
-        }
+    message = receive_msg();
+    //Read the value and do the compare
+
+    if (message == 1) { //Voltage value ex 42 = 4.2 volts
+
+    PORTCbits.RC1 = 1; //LED ON @ RC1
+
+       }
+   
+    else
+    {
+        PORTCbits.RC1 = 0; //LED OFF @ RC1
     }
-    
-//     unsigned char msg;    
-//    while(1)
-//    {  
-//    msg=receive_msg();
-//    if(msg == 0xd)
-//   	  PORTCbits.RC0 = 1;  //light the LED
-//    else
-//        PORTCbits.RC0 = 0;
-//    } 
-    return (EXIT_SUCCESS);
+}
+// unsigned char msg;
+// while(1)
+// {
+// msg=receive_msg();
+// if(msg == 0xd)
+// PORTCbits.RC0 = 1; //light the LED
+// else
+// PORTCbits.RC0 = 0;
+// }
+return (EXIT_SUCCESS);
 }
